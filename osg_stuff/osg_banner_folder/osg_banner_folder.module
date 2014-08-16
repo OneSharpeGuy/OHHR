@@ -1,192 +1,314 @@
 <?php
 
 /**
-* @file osg_banner_folder.module
-* TODO: Enter file description here.
-*/
+ * @file osg_banner_folder.module
+ * TODO: Enter file description here.
+ */
 
 
 /**
-* Implements hook_menu().
-*/
+ * Implements hook_menu().
+ */
 function osg_banner_folder_menu()
 {
-  $items['osg/banner/config'] = array(
-    'title'           => 'Banner Folder Setup',
-    'page callback'   => 'osg_banner_folder_config_form',
-    'access arguments' => array('access content'),
-    'type'            => MENU_SUGGESTED_ITEM,
-  );
-  $items['osg/banner/rebuild'] = array(
-    'title'           => 'Banner Folder Rebuild',
-    'page callback'   => 'osg_banner_folder_rebuild',
-    'access arguments' => array('access content'),
-    'type'            => MENU_SUGGESTED_ITEM,
-  );
+    $items['osg/banner/config'] = array(
+        'title' => 'Banner Folder Setup',
+        'page callback' => 'osg_banner_folder_config_form',
+        'access arguments' => array('access content'),
+        'type' => MENU_SUGGESTED_ITEM,
+        );
+    $items['osg/banner/rebuild'] = array(
+        'title' => 'Banner Folder Rebuild',
+        'page callback' => 'osg_banner_folder_rebuild',
+        'access arguments' => array('access content'),
+        'type' => MENU_SUGGESTED_ITEM,
+        );
 
 
-  return $items;
+    return $items;
 }
-function osg_banner_folder_rebuild()
-{
-  //Retrive a list of all pics in the osg_banner_folder directory
-  $pics = file_scan_directory('public://osg_banner_folder', "([^\\s]+(\\.(?i)(/bmp|jpg|gif|png))$)");
-  //Get a list of all managed files
-  $query= db_select('file_managed', 'f');
-  $query->fields('f', array('uri','fid'));
-  $result             = $query->execute();
-  $managed            = $result->fetchAllKeyed(0, 1);
-  //Clear the banners
+//function osg_banner_folder_rebuild()
+//{
+//    //Retrive a list of all pics in the osg_banner_folder directory
+//    $pics = file_scan_directory('public://osg_banner_folder', "([ ^ \\s] + (\\.(?i)( / bmp | jpg | gif | png))$)");
+//    //Get a list of all managed files
+//    $query = db_select('file_managed', 'f');
+//    $query->fields('f', array('uri', 'fid'));
+//    $result = $query->execute();
+//    $managed = $result->fetchAllKeyed(0, 1);
+//    //Clear the banners
+//
+//    /*
+//    SELECT rbid FROM osg_banner_folder_banners
+//    UNION
+//    SELECT rbid FROM osg_banner_folder_mirrors
+//    */
+//    $osg_banner_folders = db_select('osg_banner_folder_banners', 'f')->fields('f',
+//        array('rbid'));
+//
+//
+//    foreach ($pics as $uri => $value) {
+//        if (!array_key_exists($uri, $managed)) {
+//            $image = file_get_contents($uri);
+//
+//            // Returns the new file object
+//            $file = file_save_data($image, $uri, FILE_EXISTS_REPLACE);
+//            debug($file);
+//        }
+//    }
+//    $query = db_select('osg_banner_folder_banners', 'f');
+//    $query->fields('f');
+//    $folders = $query->execute();
+//
+//    foreach ($folders as $folder) {
+//
+//        $query = db_delete('rotating_banner_slides');
+//        $query->condition('rbid', $folder->rbid);
+//        $query->execute();
+//
+//        $query = db_select('file_managed', 'm');
+//        $query->fields('m');
+//        $snippet = "LEFT(uri," . strlen($folder->folder_path) . ") = :folder_path";
+//        $query->where($snippet, array(':folder_path' => $folder->folder_path));
+//        $query->orderRandom(); // Sort by random
+//
+//        /*
+//        The following represents no caption and no title as the Banner Format now supports.
+//        May have to adjust at some future point.
+//        */
+//
+//        $textboxes = '[{"position":{"top":null,"left":null,"right":null,"bottom":null},"content":"","type":"rb - textbox - type - header"},{"position":{"top":null,"left":null,"right":null,"bottom":null},"content":"","type":"rb - textbox - type - text"}]';
+//        $fields = array();
+//        $fields['rbid'] = $folder->rbid;
+//        $fields['link'] = ' < front > ';
+//        $fields['layout'] = 'top - left';
+//        $fields['textboxes'] = $textboxes;
+//
+//        $file_list = $query->execute();
+//
+//        foreach ($file_list as $row) {
+//            // Do something with each $record
+//            $fields['weight'] = mt_rand( - 99, 100);
+//            $fields['fid'] = $row->fid;
+//
+//            db_insert('rotating_banner_slides')->fields($fields)->execute();
+//        }
+//    }
+//}
 
-  /*
-  SELECT rbid FROM osg_banner_folder_banners
-  UNION
-  SELECT rbid FROM osg_banner_folder_mirrors
-  */
-  $osg_banner_folders = db_select('osg_banner_folder_banners', 'f')->fields('f',
-    array('rbid'));
-
-
-  foreach ($pics as $uri => $value) {
-    if (!array_key_exists($uri, $managed)) {
-      $image = file_get_contents($uri);
-
-      // Returns the new file object
-      $file  = file_save_data($image, $uri, FILE_EXISTS_REPLACE);
-      debug($file);
-    }
-
-  }
-}
 /**
-*
-* Implements hook_block_view_alter()
-*
-* Perform alterations to the content of a block.
-*
-* This hook allows you to modify any data returned by hook_block_view().
-*
-* Note that instead of hook_block_view_alter(), which is called for all
-* blocks, you can also use hook_block_view_MODULE_DELTA_alter() to alter a
-* specific block.
-*
-* @param $data
-*   The data as returned from the hook_block_view() implementation of the
-*   module that defined the block. This could be an empty array or NULL value
-*   (if the block is empty) or an array containing:
-*   - subject: The default localized title of the block.
-*   - content: Either a string or a renderable array representing the content
-*     of the block. You should check that the content is an array before trying
-*     to modify parts of the renderable structure.
-* @param $block
-*   The block object, as loaded from the database, having the main properties:
-*   - module: The name of the module that defined the block.
-*   - delta: The unique identifier for the block within that module, as defined
-*     in hook_block_info().
-*
-* @see hook_block_view_MODULE_DELTA_alter()
-* @see hook_block_view()
-*/
+ *
+ * Implements hook_block_view_alter()
+ *
+ * Perform alterations to the content of a block.
+ *
+ * This hook allows you to modify any data returned by hook_block_view().
+ *
+ * Note that instead of hook_block_view_alter(), which is called for all
+ * blocks, you can also use hook_block_view_MODULE_DELTA_alter() to alter a
+ * specific block.
+ *
+ * @param $data
+ *   The data as returned from the hook_block_view() implementation of the
+ *   module that defined the block. This could be an empty array or NULL value
+ *   (if the block is empty) or an array containing:
+ *   - subject: The default localized title of the block.
+ *   - content: Either a string or a renderable array representing the content
+ *     of the block. You should check that the content is an array before trying
+ *     to modify parts of the renderable structure.
+ * @param $block
+ *   The block object, as loaded from the database, having the main properties:
+ *   - module: The name of the module that defined the block.
+ *   - delta: The unique identifier for the block within that module, as defined
+ *     in hook_block_info().
+ *
+ * @see hook_block_view_MODULE_DELTA_alter()
+ * @see hook_block_view()
+ */
 
-function osg_banner_folder_block_view_alter( & $data, $block)
+function osg_banner_folder_block_view_alter(&$data, $block)
 {
-  //drupal_set_message($block->module . ' | ' . $block->delta);
-  if ($block->module == 'rotating_banner') {
+    //drupal_set_message($block->module . ' | ' . $block->delta);
+    if ($block->module == 'rotating_banner') {
 
+        $query = db_select('osg_banner_folder_banners', 'f');
+        $query->fields('f', array(
+            'folder_path',
+            'label',
+            'queue_size'));
+        $query->condition('rbid', $block->delta);
+        $query->condition('active', true);
+        $result = $query->execute();
 
-    $query = db_select('osg_banner_folder_banners', 'f');
-    $query->fields('f', array('folder_name'));
-    $query->condition('rbid', $block->delta);
-    $result = $query->execute();
-   
-    if ($result->rowCount()) {
-      $folder_row = $result->fetchAssoc();
-      $title = explode("/",$folder_row['folder_name']);
-      $title=array_reverse($title);
-     
-      $title=(string)$title[0];
-      $data['subject']=$title;
+        if ($result->rowCount()) {
+            $folder_row = $result->fetchAssoc();
+            $title = $folder_row['label'];
 
-      //$block->title = array_pop(array_reverse(explode("/",$folder_row['folder_name'])));
-      //debug($folder_row);
-      //            new dbug($data);
-      //            $slides = $data['content'][0]['slides'];
-      //
-      //            $model = $slides['slide_0'];
-      //            //new dbug($model);
-      //            $slides = array();
-      //
-      //            $row = $result->fetchAssoc();
-      //
-      //            $query = db_select('file_managed', 'm');
-      //            $query->fields('m');
-      //            $query->join('image_dimensions','d');
-      //            $query->fields('d',array('height','width'));
-      //            $query->condition('uri',' % '.$row['folder_name'].' % ','LIKE');
-      //            $query->range(0, 20);
-      //            $query->orderRandom(); // Sort by random
-      //            drupal_set_message((string)$query);
-      //            $file_list = $query->execute();
-      //            $cnt = 0;
-      //            foreach ($file_list as $row) {
-      //
-      //                $image = $model['#background_image'];
-      //                $image->image_dimensions = array('width' =>$row->width,'height'=>$row->height);
-      //
-      //                $image->fid = $row->fid;
-      //                $image->uid = $row->uid;
-      //                $image->filename = $row->filename;
-      //                $image->uri = $row->uri;
-      //                $image->status = $row->status;
-      //                $image->timestamp = $row->timestamp;
-      //                $image->type = $row->type;
-      //                $model['#background_image'] = $image;
-      //                $key = 'slide_'.$cnt;
-      //                $slides[$key] = $model;
-      //                $model['#tallest'] = FALSE;
-      //                $model['#first'] = FALSE;
-      //                ++$cnt;
-      //
-      //
-      //            }
-      //
-      //            new dbug($slides);
-      //            $data['content'][0]['slides'] = $slides;
-      //            //drupal_set_message($block->module.' | '.$block->delta);
-      //            return;
+            $data['subject'] = $title;
 
-      $query   = db_delete('rotating_banner_slides');
-      $query->condition('rbid', $block->delta);
-      $query->execute();
+            $query = db_delete('rotating_banner_slides');
+            $query->condition('rbid', $block->delta);
+            $query->execute();
 
-      $query   = db_select('file_managed', 'm');
-      $query->fields('m');
-      $snippet = "LEFT(uri,".strlen($folder_row['folder_name']).")=:folder_name";
-      $query->where($snippet,array(':folder_name'=>$folder_row['folder_name']));
-      $query->range(0, 20);
-      $query->orderRandom(); // Sort by random
-      //drupal_set_message((string)$query);
-      /*
-      The following represents no caption and no title as the Banner Format now supports.
-      May have to adjust at some future point.
-      */
-      
-      $textboxes = '[{"position":{"top":null,"left":null,"right":null,"bottom":null},"content":"","type":"rb-textbox-type-header"},{"position":{"top":null,"left":null,"right":null,"bottom":null},"content":"","type":"rb-textbox-type-text"}]';
-      $fields    = array();
-      $fields['rbid'] = $block->delta;
-      $fields['link'] = '<front>';
-      $fields['layout'] = 'top-left';
-      $fields['textboxes'] = $textboxes;
-      $file_list = $query->execute();
+            $query = db_select('file_managed', 'm');
+            $query->fields('m');
+            $snippet = "LEFT(uri," . strlen($folder_row['folder_path']) . ")=:folder_path";
+            $query->where($snippet, array(':folder_path' => $folder_row['folder_path']));
+            $query->range(0, $folder_row['queue_size']);
+            $query->orderRandom(); // Sort by random
+            //drupal_set_message((string)$query);
+            /*
+            The following represents no caption and no title as the Banner Format now supports.
+            May have to adjust at some future point.
+            */
+            $textboxes = '[{"position":{"top":null,"left":null,"right":null,"bottom":null},"content":"","type":"rb-textbox-type-header"},{"position":{"top":null,"left":null,"right":null,"bottom":null},"content":"","type":"rb-textbox-type-text"}]';
+            $fields = array();
+            $fields['rbid'] = $block->delta;
+            $fields['link'] = '<front>';
+            $fields['layout'] = 'top-left';
+            $fields['textboxes'] = $textboxes;
+            $file_list = $query->execute();
 
-      foreach ($file_list as $row) {
-        // Do something with each $record
-        $fields['weight'] = mt_rand( - 99, 100);
-        $fields['fid'] = $row->fid;
+            foreach ($file_list as $row) {
+                // Do something with each $record
+                $fields['weight'] = mt_rand(-99, 100);
+                $fields['fid'] = $row->fid;
 
-        db_insert('rotating_banner_slides')->fields($fields)->execute();
-      }
+                db_insert('rotating_banner_slides')->fields($fields)->execute();
+            }
+        }
     }
-  }
+}
+
+
+/**
+ *
+ * Implements hook_form_alter()
+ *
+ * Perform alterations before a form is rendered.
+ *
+ */
+
+function osg_banner_folder_form_block_admin_configure_alter(&$form, &$form_state)
+{
+    //if ($form_id == 'block_admin_configure') {
+    //new dbug($form_state);
+    $form['settings']['rotating_banner']['slides']['#collapsed'] = true;
+    $query = db_select('osg_banner_folder_banners', 'b');
+    $query->fields('b');
+    $query->condition('rbid', $form['delta']['#value']);
+    $result = $query->execute();
+    $row = $result->fetchAssoc();
+    if ((boolean)$row == false) {
+        $row = array(
+            'rbid' => 0,
+            'folder_path' => '',
+            'label' => '');
+    }
+
+    $form['settings']['rotating_banner']['banner_folder'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Banner Folder'),
+        '#collapsible' => true,
+
+        );
+    $form['settings']['rotating_banner']['banner_folder']['is_banner_folder'] =
+        array(
+        '#type' => 'checkbox',
+        '#title' => t('Sync with Folder'),
+        '#description' => t('If checked, banner images will be synced with a contents of directory.'),
+        '#default_value' => (bool)$row['active'],
+        );
+    $form['settings']['rotating_banner']['banner_folder']['queue_size'] = array(
+
+        '#type' => 'textfield',
+        '#title' => t('Queue Size'),
+        '#default_value' => $row['queue_size'],
+        '#description' => t('Maximum number of images in banner queue.'),
+        '#size' => 10,
+        '#states' => array('visible' => array(':input[name="rotating_banner[banner_folder][is_banner_folder]"]' =>
+                    array('checked' => true))));
+    $form['settings']['rotating_banner']['banner_folder']['path'] = array(
+
+        '#type' => 'textfield',
+        '#title' => t('Folder Path'),
+        '#default_value' => $row['folder_path'],
+        '#description' => t('Full path to the folder.'),
+        '#size' => 120,
+        '#states' => array('visible' => array(':input[name="rotating_banner[banner_folder][is_banner_folder]"]' =>
+                    array('checked' => true))));
+    $form['settings']['rotating_banner']['banner_folder']['label'] = array(
+
+        '#type' => 'textfield',
+        '#title' => t('Banner Label'),
+        '#default_value' => $row['label'],
+        '#description' => t('Text to appear above Banner'),
+        '#size' => 60,
+        '#states' => array('visible' => array(':input[name="rotating_banner[banner_folder][is_banner_folder]"]' =>
+                    array('checked' => true))));
+
+    //$form['settings']['rotating_banner']['banner_folder']['label']['#states'] = array('visible' => array(':input[name = "rotating_banner[banner_folder][is_banner_folder]"]' => array('checked' => true)));
+    // new dbug($form);
+
+    $form['#submit'][] = 'osg_banner_folder_push_to_db';
+}
+function osg_banner_folder_push_to_db($form, &$form_state)
+{
+    $fields = array();
+
+    //$fields['rbid'] = $form['delta']['#value'];
+    if (((bool)$form_state['input']['rotating_banner']['banner_folder']['is_banner_folder']) == true) {
+        $fields = array();
+        //$fields['rbid'] = $form['delta']['#value'];
+        $keys['rbid'] = $form['delta']['#value'];
+        $fields['folder_path'] = $form_state['input']['rotating_banner']['banner_folder']['path'];
+        $fields['label'] = $form_state['input']['rotating_banner']['banner_folder']['label'];
+        $fields['queue_size'] = $form_state['input']['rotating_banner']['banner_folder']['queue_size'];
+        $fields['active'] = true;
+
+        db_merge('osg_banner_folder_banners')->key($keys)->fields($fields)->execute();
+
+        osg_banner_folder_sync_folder($fields['folder_path']);
+    } else {
+        $query = db_update('osg_banner_folder_banners');
+        $query->condition('rbid', $form['delta']['#value']);
+        $query->fields(array('active' => false));
+        $query->execute();
+
+    }
+}
+function osg_banner_folder_sync_folder($folder_path)
+{
+    $pics = file_scan_directory($folder_path, "([^\\s]+(\\.(?i)(/bmp|jpg|gif|png))$)");
+    //Get a list of all managed files
+    $query = db_select('file_managed', 'f');
+    $query->fields('f', array('uri', 'fid'));
+    $snippet = "LEFT(uri," . strlen($folder_path) . ")=:folder_path";
+    $query->where($snippet, array(':folder_path' => $folder_path));
+    $result = $query->execute();
+
+
+    $managed = $result->fetchAllKeyed(0, 1);
+    foreach ($pics as $uri => $value) {
+        if (!array_key_exists($uri, $managed)) {
+            $image = file_get_contents($uri);
+
+            // Returns the new file object
+            $file = file_save_data($image, $uri, FILE_EXISTS_REPLACE);
+
+        }
+    }
+    foreach ($managed as $uri => $value) {
+        if (!array_key_exists($uri, $pics)) {
+            //The file no longer exists in the folder, but is still in the database.
+            //This shouldn't happen, so just delete the db row and move on
+
+            $query = db_delete('file_managed');
+            $query->condition('uri', $uri);
+
+            $result = $query->execute();
+        }
+    }
+
 
 }
